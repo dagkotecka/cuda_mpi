@@ -2,8 +2,8 @@
 #include <cuda_runtime.h>
 #include <cstdlib>
 
-int SIZE = 16;
-int LIFE_CYCLES = 10;
+__device__ int COLUMN_LEN = 0;
+__device__ int ROW_LEN = 0;
 
 #define DEBUG 0
 
@@ -20,9 +20,9 @@ enum error_case
 	e_default = 99
 };
 
-#define XY(X, Y) (((X) * SIZE) + (Y))
+#define XY(X, Y) (((X) * COLUMN_LEN) + (Y))
 
-#define valid(X, Y) (((X) < 0 || (X) >= SIZE || (Y) < 0 || (Y) >= SIZE) ? 0 : 1)
+#define valid(X, Y) (((X) < 0 || (X) >= COLUMN_LEN || (Y) < 0 || (Y) >= ROW_LEN) ? 0 : 1)
 
 void check_error(cudaError_t error, error_case place)
 {
@@ -67,7 +67,7 @@ calculate_new_status(const unsigned int *board, unsigned int *new_board, const i
 		int jj = aa % rowLen;
 		int alive_neighbours = 0;
 
-		if ((ii != 0) || (ii != (SIZE - 1)))
+		if ((ii != 0) || (ii != (rowLen - 1)))
 		{
 			alive_neighbours += (valid(ii - 1, jj - 1) ? board[XY(ii - 1, jj - 1)] : 0) ? 1 : 0;
 			alive_neighbours += (valid(ii - 1, jj) ? board[XY(ii - 1, jj)] : 0) ? 1 : 0;
@@ -116,9 +116,12 @@ calculate_new_status(const unsigned int *board, unsigned int *new_board, const i
 	}
 }
 
-extern "C" int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen)
+extern "C" unsigned int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen)
 {
 	if (columnLen < 3 || rowLen < 3) exit(EXIT_FAILURE);
+
+	cudaMemcpy(&COLUMN_LEN, &columnLen, sizeof(unsigned int), cudaMemcpyHostToDevice);
+	cudaMemcpy(&ROW_LEN, &rowLen, sizeof(unsigned int), cudaMemcpyHostToDevice);
 
 	int THREADS_PER_BLOCK = 16;
 	int BLOCKS_PER_GRID = (columnLen*rowLen + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
@@ -128,7 +131,7 @@ extern "C" int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsi
 	unsigned int *board = NULL;
 	board = (unsigned int*)malloc(columnLen * rowLen * sizeof(unsigned int*));
 
-	if (board== NULL)
+	if (board == NULL)
 	{
 		fprintf(stderr, "Malloc failed!\n");
 		exit(EXIT_FAILURE);
