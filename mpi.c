@@ -74,7 +74,6 @@ int main(int argc, char **argv)
 	unsigned int fullIntervalUints = (intervalSize + 2) * columnLen;
 
 	printf("Starting nodes...\n");
-
 	if(myId == 0) // master
 	{
 		int ii = 0;
@@ -92,7 +91,7 @@ int main(int argc, char **argv)
 		{
 			for(jj = 0; jj < columnLen; ++jj)
 			{
-				board[(ii*columnLen) + jj] = 1;//rand() % 2;
+				board[(ii*columnLen) + jj] = rand() % 2;
 			}
 		}
 
@@ -100,7 +99,7 @@ int main(int argc, char **argv)
 
 		for(ii = 0; ii < slaves; ii++)
 		{
-			unsigned int *new_ptr = &board [ii * (intervalUints + 1)];
+			unsigned int *new_ptr = &board [ii * (intervalUints)];
 			MPI_Send(new_ptr, fullIntervalUints, MPI_UNSIGNED, ii + 1, DATA, MPI_COMM_WORLD);
 		}
 
@@ -136,7 +135,7 @@ int main(int argc, char **argv)
 		printf("Processing node %d done!\n", myId);
 	}
 
-	//MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
 	//if(board != NULL)
 	//	free(board);
 
