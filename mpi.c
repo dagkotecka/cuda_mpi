@@ -18,12 +18,12 @@ void print_board(unsigned int * board, unsigned int columnLen)
 	unsigned int jj = 0;
 	board += columnLen * sizeof(unsigned int);
 
-    for(; ii < columnLen; ii++)
+    for(ii = 0; ii < columnLen; ii++)
     {
-        for(; jj < columnLen; jj++)
+        for(jj = 0; jj < columnLen; jj++)
         {
             if(board[columnLen * ii + jj] == 0)
-                printf("x");
+                printf(" ");
             else
                 printf("#");
         }
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 
 	if(myId == 0) // master
 	{
-		int ii = 1;
+		int ii = 0;
 		int jj = 0;
 
 		board = (unsigned int *) calloc (rows * columnLen, sizeof(unsigned int));
@@ -90,13 +90,11 @@ int main(int argc, char **argv)
 		}
 
 		printf("columnLen %d...1\n", columnLen);
-		for(; ii <= columnLen; ++ii)
+		for(ii = 1; ii <= columnLen; ++ii)
 		{
-			for(; jj < columnLen; ++jj)
+			for(jj = 0; jj < columnLen; ++jj)
 			{
-				printf("ii %d, jj %d\n", ii, jj);
 				board[(ii*columnLen) + jj] = 1;//rand() % 2;
-				//printf("%d ", (ii*columnLen) + jj);
 			}
 		}
 		printf("Processing node %d...2\n", myId);
