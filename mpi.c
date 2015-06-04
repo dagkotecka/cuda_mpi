@@ -12,20 +12,19 @@ void cudaCalculate(unsigned int * board, unsigned int columnLen, unsigned int ro
 
 }
 
-void print_board(unsigned int * board, unsigned int columnLen)
+void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows)
 {
 	unsigned int ii = 0;
 	unsigned int jj = 0;
-	board += columnLen * sizeof(unsigned int);
 
-    for(ii = 0; ii < columnLen; ii++)
+    for(ii = 0; ii < rows; ii++)
     {
         for(jj = 0; jj < columnLen; jj++)
         {
             if(board[columnLen * ii + jj] == 0)
                 printf(" ");
             else
-                printf("#");
+				printf("#");
         }
         printf("\n");
     }
@@ -36,7 +35,7 @@ int main(int argc, char **argv)
 {
     int myId, procs, slaves;
     unsigned int columnLen, cycles, rows;
-	unsigned int *board; 
+	unsigned int *board = NULL; 
     MPI_Status status;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &myId);
@@ -72,7 +71,7 @@ int main(int argc, char **argv)
 
 	unsigned int intervalSize = rows / slaves;
 	unsigned int intervalUints = intervalSize * columnLen;
-	unsigned int fullIntervalUints = intervalSize * (columnLen + 2);
+	unsigned int fullIntervalUints = (intervalSize + 2) * columnLen;
 
 	printf("Starting nodes...\n");
 
@@ -89,7 +88,6 @@ int main(int argc, char **argv)
 			return 0;
 		}
 
-		printf("columnLen %d...1\n", columnLen);
 		for(ii = 1; ii <= columnLen; ++ii)
 		{
 			for(jj = 0; jj < columnLen; ++jj)
@@ -97,22 +95,22 @@ int main(int argc, char **argv)
 				board[(ii*columnLen) + jj] = 1;//rand() % 2;
 			}
 		}
-		printf("Processing node %d...2\n", myId);
-		print_board(board, columnLen);
-		printf("Processing node %d...3\n", myId);
+
+		print_board(board, columnLen, rows);
+
 		for(ii = 0; ii < slaves; ii++)
 		{
-			unsigned int *new_ptr = board + (ii * (intervalUints + 1)) * sizeof(unsigned int);
+			unsigned int *new_ptr = &board [ii * (intervalUints + 1)];
 			MPI_Send(new_ptr, fullIntervalUints, MPI_UNSIGNED, ii + 1, DATA, MPI_COMM_WORLD);
 		}
-		printf("Processing node %d...4\n", myId);
+
 		for(ii = 0; ii < slaves; ii++)
 		{
-			unsigned int *new_ptr = board + (ii * intervalUints + columnLen) * sizeof(unsigned int);
+			unsigned int *new_ptr = &board[ii * intervalUints + columnLen];
 			MPI_Recv(new_ptr, intervalUints, MPI_UNSIGNED, ii + 1, DATA, MPI_COMM_WORLD, &status);
 		}
-		printf("Processing node %d...5\n", myId);
-		print_board(board, columnLen);
+
+		print_board(board, columnLen, rows);
 
 		printf("Processing node %d done!\n", myId);
 	}
@@ -128,17 +126,19 @@ int main(int argc, char **argv)
 		}
 
 		MPI_Recv(slaveBoard, fullIntervalUints, MPI_UNSIGNED, 0, DATA, MPI_COMM_WORLD, &status);
+
 		printf("Processing node %d...2\n", myId);
 		cudaCalculate(slaveBoard, columnLen, fullIntervalUints / columnLen);
 		printf("Processing node %d...3\n", myId);
-		MPI_Send(slaveBoard + columnLen * sizeof(unsigned int), intervalUints, MPI_UNSIGNED, 0, DATA, MPI_COMM_WORLD);
+		unsigned int *new_ptr = &slaveBoard[columnLen];
+		MPI_Send(new_ptr, intervalUints, MPI_UNSIGNED, 0, DATA, MPI_COMM_WORLD);
 		//free(slaveBoard);
 		printf("Processing node %d done!\n", myId);
 	}
 
-	MPI_Barrier(MPI_COMM_WORLD);
-
-	//free(board);
+	//MPI_Barrier(MPI_COMM_WORLD);
+	//if(board != NULL)
+	//	free(board);
 
 	MPI_Finalize();
 	printf("Everything's fine. Closing now.\n");
