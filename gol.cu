@@ -60,11 +60,11 @@ calculate_new_status(const unsigned int *board, unsigned int *new_board, unsigne
 
 	if (aa < columnLen*rowLen)
 	{
-		int ii = aa / rowLen;
-		int jj = aa % columnLen;
+		int ii = aa / columnLen;
+		int jj = aa % rowLen;
 		int alive_neighbours = 0;
 
-		if ((ii != 0) || (ii != (rowLen - 1)))
+		if ((ii != 0) || (ii != (columnLen - 1)))
 		{
 			alive_neighbours += (valid(ii - 1, jj - 1, columnLen, rowLen) ? board[XY(ii - 1, jj - 1, columnLen)] : 0) ? 1 : 0;
 			alive_neighbours += (valid(ii - 1, jj, columnLen, rowLen) ? board[XY(ii - 1, jj, columnLen)] : 0) ? 1 : 0;
