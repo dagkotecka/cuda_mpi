@@ -128,16 +128,6 @@ extern "C" unsigned int* cudaCalculate(unsigned int * cells, unsigned int column
 
 	cudaError_t error = cudaSuccess;
 	srand(time(NULL));
-	unsigned int *board = NULL;
-	board = (unsigned int*)malloc(columnLen * rowLen * sizeof(unsigned int*));
-
-	if (board == NULL)
-	{
-		fprintf(stderr, "Malloc failed!\n");
-		exit(EXIT_FAILURE);
-	}
-
-	board = cells;
 
 	unsigned int *d_board = NULL;
 	unsigned int *d_new_board = NULL;
@@ -148,14 +138,14 @@ extern "C" unsigned int* cudaCalculate(unsigned int * cells, unsigned int column
 	error = cudaMalloc((void **)&d_new_board, columnLen*rowLen*sizeof(unsigned int));
 	check_error(error, e_malloc);
 
-	error = cudaMemcpy(d_board, board, columnLen*rowLen*sizeof(unsigned int), cudaMemcpyHostToDevice);
+	error = cudaMemcpy(d_board, cells, columnLen*rowLen*sizeof(unsigned int), cudaMemcpyHostToDevice);
 	check_error(error, e_memcpyHtD);
 
 	calculate_new_status << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(d_board, d_new_board, columnLen, rowLen);
 	error = cudaGetLastError();
 	check_error(error, e_kernel);
 
-	error = cudaMemcpy(board, d_new_board, columnLen*rowLen*sizeof(unsigned int), cudaMemcpyDeviceToHost);
+	error = cudaMemcpy(cells, d_new_board, columnLen*rowLen*sizeof(unsigned int), cudaMemcpyDeviceToHost);
 	check_error(error, e_memcpyDtH);
 
 	error = cudaFree(d_board);
@@ -167,5 +157,5 @@ extern "C" unsigned int* cudaCalculate(unsigned int * cells, unsigned int column
 	error = cudaDeviceReset();
 	check_error(error, e_reset);
 
-	return board;
+	return cells;
 }

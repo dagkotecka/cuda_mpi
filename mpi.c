@@ -6,11 +6,7 @@
 
 #define DATA 0
 
-
-void cudaCalculate(unsigned int * board, unsigned int columnLen, unsigned int rowLen)
-{
-
-}
+cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen);
 
 void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows)
 {
@@ -71,7 +67,7 @@ int main(int argc, char **argv)
 
 	unsigned int intervalSize = rows / slaves;
 	unsigned int intervalUints = intervalSize * columnLen;
-	unsigned int fullIntervalUints = (intervalSize + 2) * columnLen;
+	unsigned int fullIntervalUints = intervalSize * columnLen;
 
 	printf("Starting nodes...\n");
 	if(myId == 0) // master
