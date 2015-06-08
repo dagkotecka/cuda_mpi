@@ -6,7 +6,7 @@
 
 #define DATA 0
 
-cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen);
+unsigned int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen);
 
 void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows)
 {

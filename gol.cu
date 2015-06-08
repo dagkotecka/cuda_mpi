@@ -57,17 +57,17 @@ void check_error(cudaError_t error, error_case place)
 }
 
 __global__ void
-calculate_new_status(const unsigned int *board, unsigned int *new_board, const int columnLen, const int rowLen)
+calculate_new_status(const unsigned int *board, unsigned int *new_board)
 {
 	int aa = blockDim.x * blockIdx.x + threadIdx.x;
 
-	if (aa < columnLen*rowLen)
+	if (aa < COLUMN_LEN*ROW_LEN)
 	{
-		int ii = aa / columnLen;
-		int jj = aa % rowLen;
+		int ii = aa / COLUMN_LEN;
+		int jj = aa % ROW_LEN;
 		int alive_neighbours = 0;
 
-		if ((ii != 0) || (ii != (rowLen - 1)))
+		if ((ii != 0) || (ii != (ROW_LEN - 1)))
 		{
 			alive_neighbours += (valid(ii - 1, jj - 1) ? board[XY(ii - 1, jj - 1)] : 0) ? 1 : 0;
 			alive_neighbours += (valid(ii - 1, jj) ? board[XY(ii - 1, jj)] : 0) ? 1 : 0;
@@ -141,7 +141,8 @@ extern "C" unsigned int* cudaCalculate(unsigned int * cells, unsigned int column
 	error = cudaMemcpy(d_board, cells, columnLen*rowLen*sizeof(unsigned int), cudaMemcpyHostToDevice);
 	check_error(error, e_memcpyHtD);
 
-	calculate_new_status << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(d_board, d_new_board, columnLen, rowLen);
+	printf("here");
+	calculate_new_status<<<BLOCKS_PER_GRID, THREADS_PER_BLOCK >>>(d_board, d_new_board);
 	error = cudaGetLastError();
 	check_error(error, e_kernel);
 
