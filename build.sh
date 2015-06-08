@@ -1,7 +1,7 @@
 echo "building...";
 
 echo "cuda gol"
-nvcc -arch=sm_20 -c gol.cu -o gol.o
+nvcc -arch=compute_20 -c gol.cu -o gol.o
 echo "mpi"
 /opt/mpich/ch-p4/bin/mpicc -c mpi.c -o mpi.o -lm
 echo "mpi cuda"
