@@ -65,9 +65,9 @@ int main(int argc, char **argv)
 		rows += slaves - (columnLen % slaves); // addition to be slave multiple
 	rows += 2; // due to first and last zeros row
 
-	unsigned int intervalSize = rows / slaves;
+	unsigned int intervalSize = columnLen / slaves;
 	unsigned int intervalUints = intervalSize * columnLen;
-	unsigned int fullIntervalUints = intervalSize * columnLen;
+	unsigned int fullIntervalUints = (intervalSize + 2) * columnLen;
 
 	printf("Starting nodes...\n");
 	if(myId == 0) // master

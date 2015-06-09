@@ -19,7 +19,7 @@ enum error_case
 
 #define XY(X, Y, columnLen) (((X) * columnLen) + (Y))
 
-#define valid(X, Y, columnLen, rowLen) (((X) < 0 || (X) >= columnLen || (Y) < 0 || (Y) >= rowLen) ? 0 : 1)
+#define valid(X, Y, columnLen, rowLen) (((X) < 0 || (X) >= rowLen || (Y) < 0 || (Y) >= columnLen) ? 0 : 1)
 
 void check_error(cudaError_t error, error_case place)
 {
@@ -61,7 +61,7 @@ calculate_new_status(const unsigned int *board, unsigned int *new_board, unsigne
 	if (aa < columnLen*rowLen)
 	{
 		int ii = aa / columnLen;
-		int jj = aa % rowLen;
+		int jj = aa % columnLen;
 		int alive_neighbours = 0;
 
 		if ((ii != 0) || (ii != (columnLen - 1)))
@@ -117,7 +117,7 @@ extern "C" unsigned int* cudaCalculate(unsigned int * cells, unsigned int column
 {
 	if (columnLen < 3 || rowLen < 3) exit(EXIT_FAILURE);
 
-	int THREADS_PER_BLOCK = 16;
+	int THREADS_PER_BLOCK = 256;
 	int BLOCKS_PER_GRID = (columnLen*rowLen + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
 	cudaError_t error = cudaSuccess;
@@ -125,21 +125,37 @@ extern "C" unsigned int* cudaCalculate(unsigned int * cells, unsigned int column
 
 	unsigned int *d_board = NULL;
 	unsigned int *d_new_board = NULL;
+	unsigned int *tmp_board = NULL;
+
+
+	tmp_board = (unsigned int*) malloc (columnLen*rowLen*sizeof(unsigned int));	
+	check_error(error, e_malloc);
+
+	for (int i=0; i <rowLen*columnLen;i++)
+	{
+		tmp_board[i] = 0;
+	}
+	
 
 	error = cudaMalloc((void **)&d_board, columnLen*rowLen*sizeof(unsigned int));
 	check_error(error, e_malloc);
 
+
+
 	error = cudaMalloc((void **)&d_new_board, columnLen*rowLen*sizeof(unsigned int));
 	check_error(error, e_malloc);
+
+	cudaMemcpy(d_new_board, tmp_board, columnLen*rowLen*sizeof(unsigned int), cudaMemcpyHostToDevice);
+
 
 	error = cudaMemcpy(d_board, cells, columnLen*rowLen*sizeof(unsigned int), cudaMemcpyHostToDevice);
 	check_error(error, e_memcpyHtD);
 
 	cudaDeviceSynchronize();
 	calculate_new_status << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(d_board, d_new_board, columnLen, rowLen);
-	cudaDeviceSynchronize();
 	error = cudaGetLastError();
 	check_error(error, e_kernel);
+	cudaDeviceSynchronize();
 
 	error = cudaMemcpy(cells, d_new_board, columnLen*rowLen*sizeof(unsigned int), cudaMemcpyDeviceToHost);
 	check_error(error, e_memcpyDtH);
