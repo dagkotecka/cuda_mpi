@@ -52,7 +52,7 @@ void check_error(cudaError_t error, error_case place)
 }
 
 __global__ void
-calculate_new_status(const char *board, char *new_board, unsigned int columnLen, unsigned int rowLen, unsigned threads)
+calculate_new_status(const char *board, char *new_board, unsigned int columnLen, unsigned int rowLen, unsigned int threads)
 {
 	int aa = blockDim.x * blockIdx.x + threadIdx.x;
 
