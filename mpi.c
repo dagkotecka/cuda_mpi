@@ -6,7 +6,10 @@
 
 #define DATA 0
 
-unsigned int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen);
+unsigned int* cudaCalculate2(unsigned int * cells, unsigned int columnLen, unsigned int rowLen)
+{
+    return NULL;
+}
 
 void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows)
 {
@@ -55,19 +58,21 @@ int main(int argc, char **argv)
 
     if(argc >= 3)
     {
-        columnLen = atoi(argv[1]);
-        cycles = atoi(argv[2]);
+        rows = columnLen = (unsigned int) atoi(argv[1]);
+        cycles = (unsigned int) atoi(argv[2]);
     }
 	else
 	{
-		rows = columnLen = 7;
+		rows = columnLen = 16;
         cycles = 10;
 	}
-    printf("rows %d, cycles %d\n", rows, cycles);
 
-	if(columnLen % slaves != 0) 
+	if(columnLen % slaves != 0)
+	{
 		rows += slaves - (columnLen % slaves); // addition to be slave multiple
+	}
 	rows += 2; // due to first and last zeros row
+	printf("rows %u, columnLen %u, cycles %u\n", rows, columnLen, cycles);
 
 	intervalSize = rows / slaves;
 	intervalUints = intervalSize * columnLen;
@@ -113,7 +118,7 @@ int main(int argc, char **argv)
 		for(jj = 0; jj < columnLen; ++jj)
 			board[jj] = 0;
 
-		for(ii = columnLen; ii < rows; ++ii)
+		for(ii = columnLen + 1; ii < rows; ++ii)
 			for(jj = 0; jj < columnLen; ++jj)
 				board[ii*columnLen + jj] = 0;
 
@@ -136,11 +141,12 @@ int main(int argc, char **argv)
 		MPI_Recv(slaveBoard, fullIntervalUints, MPI_UNSIGNED, 0, DATA, MPI_COMM_WORLD, &status);
 
 		printf("Processing node %d...2\n", myId);
-		cudaCalculate(slaveBoard, columnLen, fullIntervalUints / columnLen);
+		cudaCalculate2(slaveBoard, columnLen, fullIntervalUints / columnLen);
 		printf("Processing node %d...3\n", myId);
 		new_ptr = &slaveBoard[columnLen];
 		MPI_Send(new_ptr, intervalUints, MPI_UNSIGNED, 0, DATA, MPI_COMM_WORLD);
 		//free(slaveBoard);
+		slaveBoard = NULL;
 		printf("Processing node %d done!\n", myId);
 	}
 
