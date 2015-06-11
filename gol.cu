@@ -111,35 +111,52 @@ calculate_new_status(const char *board, char *new_board, unsigned int columnLen,
 	}
 }
 
-int setGPUDeviceAndGetThreads() {
+int setGPUDevice() {
 	int devicesQuantity, max_multiprocessors = 0, deviceGPU = 0;
-    
-    cudaGetDeviceCount(&devicesQuantity);
-    
-    if (devicesQuantity > 1) {          
-        for (int i= 0; i< devicesQuantity; i++) {
-            cudaDeviceProp properties;
-            cudaGetDeviceProperties(&properties, i);
-            
-            if (max_multiprocessors < properties.multiProcessorCount) {
-                max_multiprocessors = properties.multiProcessorCount;
-                deviceGPU = i;
-            }
-        }
-    }
-    
-    cudaSetDevice(deviceGPU);
+
+	cudaGetDeviceCount(&devicesQuantity);
+
+	if (devicesQuantity > 1) {
+		for (int i = 0; i< devicesQuantity; i++) {
+			cudaDeviceProp properties;
+			cudaGetDeviceProperties(&properties, i);
+
+			max_multiprocessors = properties.multiProcessorCount;
+			deviceGPU = i;
+
+		}
+	}
+	return deviceGPU;
+	
+}
+int setThreads(int deviceGPU)
+{
+	cudaSetDevice(deviceGPU);
 	cudaDeviceProp properties;
-    cudaGetDeviceProperties(&properties, deviceGPU);
-    return properties.maxThreadsPerBlock;
+	cudaGetDeviceProperties(&properties, deviceGPU);
+	return properties.maxThreadsPerBlock;
+}
+int setBlocks(int deviceGPU)
+{
+	cudaDeviceProp properties;
+	cudaGetDeviceProperties(&properties, deviceGPU);
+	if (properties.maxGridSize[0] > properties.maxGridSize[1])
+	{
+		return properties.maxGridSize[0];
+	}
+	else
+	{
+		return properties.maxGridSize[1];
+	}
 }
 
 extern "C" void cudaCalculate(char * cells, unsigned int columnLen, unsigned int rowLen)
 {
 	if (columnLen < 3 || rowLen < 3) exit(EXIT_FAILURE);
 
-    int THREADS_PER_BLOCK = setGPUDeviceAndGetThreads();
-	int BLOCKS_PER_GRID = (columnLen*rowLen + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+	int device = setGPUDevice();
+	int THREADS_PER_BLOCK = setThreads(device);
+	int BLOCKS_PER_GRID = setBlocks(device);
 
 	cudaError_t error = cudaSuccess;
 	srand(time(NULL));
