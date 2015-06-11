@@ -111,7 +111,7 @@ calculate_new_status(const char *board, char *new_board, unsigned int columnLen,
 	}
 }
 
-int setGPUDevice() {
+int setGPUDeviceAndThreads() {
 	int devicesQuantity, max_multiprocessors = 0, deviceGPU = 0;
 
 	cudaGetDeviceCount(&devicesQuantity);
@@ -126,37 +126,18 @@ int setGPUDevice() {
 
 		}
 	}
-	return deviceGPU;
-	
-}
-int setThreads(int deviceGPU)
-{
 	cudaSetDevice(deviceGPU);
 	cudaDeviceProp properties;
 	cudaGetDeviceProperties(&properties, deviceGPU);
-	return properties.maxThreadsPerBlock;
-}
-int setBlocks(int deviceGPU)
-{
-	cudaDeviceProp properties;
-	cudaGetDeviceProperties(&properties, deviceGPU);
-	if (properties.maxGridSize[0] > properties.maxGridSize[1])
-	{
-		return properties.maxGridSize[0];
-	}
-	else
-	{
-		return properties.maxGridSize[1];
-	}
+	return properties.maxThreadsPerBlock;	
 }
 
 extern "C" void cudaCalculate(char * cells, unsigned int columnLen, unsigned int rowLen)
 {
 	if (columnLen < 3 || rowLen < 3) exit(EXIT_FAILURE);
 
-	int device = setGPUDevice();
-	int THREADS_PER_BLOCK = setThreads(device);
-	int BLOCKS_PER_GRID = setBlocks(device);
+	int THREADS_PER_BLOCK = setGPUDeviceAndThreads();
+	int BLOCKS_PER_GRID = 256; // ustaw ile tu chcesz
 
 	cudaError_t error = cudaSuccess;
 	srand(time(NULL));
