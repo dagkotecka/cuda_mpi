@@ -52,11 +52,11 @@ void check_error(cudaError_t error, error_case place)
 }
 
 __global__ void
-calculate_new_status(const char *board, char *new_board, unsigned int columnLen, unsigned int rowLen)
+calculate_new_status(const char *board, char *new_board, unsigned int columnLen, unsigned int rowLen, unsigned threads)
 {
 	int aa = blockDim.x * blockIdx.x + threadIdx.x;
 
-	if (aa < columnLen*rowLen)
+	while (aa < columnLen*rowLen)
 	{
 		int ii = aa / columnLen;
 		int jj = aa % columnLen;
@@ -108,6 +108,7 @@ calculate_new_status(const char *board, char *new_board, unsigned int columnLen,
 			new_board[XY(ii, jj, columnLen)] = tmp_cell_val;
 #endif // DEBUG
 		}
+        aa += threads;
 	}
 }
 
@@ -154,7 +155,7 @@ extern "C" void cudaCalculate(char * cells, unsigned int columnLen, unsigned int
 	error = cudaMemcpy(d_board, cells, columnLen*rowLen*sizeof(char), cudaMemcpyHostToDevice);
 	check_error(error, e_memcpyHtD);
 
-	calculate_new_status << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(d_board, d_new_board, columnLen, rowLen);
+	calculate_new_status << <BLOCKS_PER_GRID, THREADS_PER_BLOCK >> >(d_board, d_new_board, columnLen, rowLen, (unsigned int) THREADS_PER_BLOCK * BLOCKS_PER_GRID);
 	error = cudaGetLastError();
 	check_error(error, e_kernel);
 	cudaDeviceSynchronize();
