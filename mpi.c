@@ -8,12 +8,15 @@
 
 unsigned int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen);
 
-void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows)
+void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows, unsigned int printing)
 {
     unsigned int ii = 0;
     unsigned int jj = 0;
 
-    system("clear");
+    if(! printing)
+        return;
+
+    ii = system("clear"); // due to warning of unused return
 
     for(ii = 0; ii < rows; ii++)
     {
@@ -32,7 +35,7 @@ void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows
 int main(int argc, char **argv) 
 {
     int myId, procs, slaves;
-    unsigned int columnLen, cycles, rows;
+    unsigned int columnLen, cycles, rows, printing;
     unsigned int intervalSize, intervalUints, fullIntervalUints;
     unsigned int *board = NULL; 
     MPI_Status status;
@@ -48,22 +51,25 @@ int main(int argc, char **argv)
         printf("Needs at least 1 slave.\n");
         return 0;
     }
-    
-    printf("Starting MPI...\n");
+
+    if(myId == 0)
+        printf("Starting MPI...\n");
 
     srand ((unsigned int) time(NULL));
     slaves = procs - 1;
     //printf("Slaves: %d\n", slaves);
 
-    if(argc >= 3)
+    if(argc >= 4)
     {
         rows = columnLen = (unsigned int) atoi(argv[1]);
         cycles = (unsigned int) atoi(argv[2]);
+        printing = (unsigned int) atoi(argv[3]);
     }
     else
     {
         rows = columnLen = 16;
         cycles = 10;
+        printing = 1;
     }
 
     if(columnLen % slaves != 0)
@@ -76,7 +82,7 @@ int main(int argc, char **argv)
     fullIntervalUints = (intervalSize + 2) * columnLen;
 
     rows += 2; // due to first and last zeros row
-    printf("rows %u, columnLen %u, cycles %u\n", rows, columnLen, cycles);
+    //printf("rows %u, columnLen %u, cycles %u\n", rows, columnLen, cycles);
 
     //printf("Starting nodes...\n");
     if(myId == 0) // master
@@ -101,7 +107,7 @@ int main(int argc, char **argv)
             }
         }
 
-        print_board(board, columnLen, rows);
+        print_board(board, columnLen, rows, 1);
 
         while(cycles--)
         {
@@ -124,7 +130,7 @@ int main(int argc, char **argv)
                 for(jj = 0; jj < columnLen; ++jj)
                     board[ii*columnLen + jj] = 0;
 
-            print_board(board, columnLen, rows);
+            print_board(board, columnLen, rows, printing);
         }
 
         printf("Processing node %d done!\n", myId);
@@ -156,10 +162,14 @@ int main(int argc, char **argv)
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if(myId ==0 && board != NULL)
+    if(myId == 0)
+    {
+        print_board(board, columnLen, rows, 1);
         free(board);
+        board = NULL;
+    }
 
     MPI_Finalize();
-    printf("Everything's fine. Closing now.\n");
+    //printf("Everything's fine. Closing now.\n");
     return 0;
 }
