@@ -137,7 +137,7 @@ extern "C" void cudaCalculate(char * cells, unsigned int columnLen, unsigned int
 	if (columnLen < 3 || rowLen < 3) exit(EXIT_FAILURE);
 
 	int THREADS_PER_BLOCK = setGPUDeviceAndThreads();
-	int BLOCKS_PER_GRID = 256; // ustaw ile tu chcesz
+	int BLOCKS_PER_GRID = 256;
 
 	cudaError_t error = cudaSuccess;
 	srand(time(NULL));
