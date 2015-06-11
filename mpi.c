@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 		rows += slaves - (columnLen % slaves); // addition to be slave multiple
 	rows += 2; // due to first and last zeros row
 
-	unsigned int intervalSize = columnLen / slaves;
+	unsigned int intervalSize = (columnLen + slaves - 1) / slaves; // round up
 	unsigned int intervalUints = intervalSize * columnLen;
 	unsigned int fullIntervalUints = (intervalSize + 2) * columnLen;
 
