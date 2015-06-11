@@ -13,6 +13,8 @@ void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows
     unsigned int ii = 0;
     unsigned int jj = 0;
 
+    system("clear");
+
     for(ii = 0; ii < rows; ii++)
     {
         for(jj = 0; jj < columnLen; jj++)
