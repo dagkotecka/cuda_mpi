@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 		for(jj = 0; jj < columnLen; ++jj)
 			board[jj] = 0;
 
-		for(ii = columnLen; ii <= rows; ++ii)
+		for(ii = columnLen; ii < rows; ++ii)
 			for(jj = 0; jj < columnLen; ++jj)
 				board[ii*columnLen + jj] = 0;
 
