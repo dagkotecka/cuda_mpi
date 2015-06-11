@@ -8,13 +8,10 @@
 
 unsigned int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen);
 
-void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows, unsigned int printing)
+void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows)
 {
     unsigned int ii = 0;
     unsigned int jj = 0;
-
-    if(! printing)
-        return;
 
     ii = system("clear"); // due to warning of unused return
 
@@ -107,7 +104,8 @@ int main(int argc, char **argv)
             }
         }
 
-        print_board(board, columnLen, rows, 1);
+        if(printing >= 1)
+            print_board(board, columnLen, rows);
 
         while(cycles--)
         {
@@ -130,7 +128,8 @@ int main(int argc, char **argv)
                 for(jj = 0; jj < columnLen; ++jj)
                     board[ii*columnLen + jj] = 0;
 
-            print_board(board, columnLen, rows, printing);
+            if(printing > 1)
+                print_board(board, columnLen, rows);
         }
 
         printf("Processing node %d done!\n", myId);
@@ -164,7 +163,8 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
     if(myId == 0)
     {
-        print_board(board, columnLen, rows, 1);
+        if(printing >= 1)
+            print_board(board, columnLen, rows);
         free(board);
         board = NULL;
     }
