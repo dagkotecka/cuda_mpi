@@ -113,11 +113,34 @@ calculate_new_status(const unsigned int *board, unsigned int *new_board, unsigne
 	}
 }
 
+int setGPUDeviceAndGetThreads() {
+	int devicesQuantity, max_multiprocessors = 0, deviceGPU = 0;
+    
+    cudaGetDeviceCount(&devicesQuantity);
+    
+    if (devicesQuantity > 1) {          
+        for (int i= 0; i< devicesQuantity; i++) {
+            cudaDeviceProp properties;
+            cudaGetDeviceProperties(&properties, i);
+            
+            if (max_multiprocessors < properties.multiProcessorCount) {
+                max_multiprocessors = properties.multiProcessorCount;
+                deviceGPU = i;
+            }
+        }
+    }
+    
+    cudaSetDevice(deviceGPU);
+	cudaDeviceProp properties;
+    cudaGetDeviceProperties(&properties, deviceGPU);
+    return properties.maxThreadsPerBlock;
+}
+
 extern "C" unsigned int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen)
 {
 	if (columnLen < 3 || rowLen < 3) exit(EXIT_FAILURE);
 
-	int THREADS_PER_BLOCK = 256;
+    int THREADS_PER_BLOCK = setGPUDeviceAndGetThreads();
 	int BLOCKS_PER_GRID = (columnLen*rowLen + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 
 	cudaError_t error = cudaSuccess;
