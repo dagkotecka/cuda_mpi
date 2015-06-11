@@ -70,12 +70,13 @@ int main(int argc, char **argv)
     {
         rows += slaves - (columnLen % slaves); // addition to be slave multiple
     }
-    rows += 2; // due to first and last zeros row
-    printf("rows %u, columnLen %u, cycles %u\n", rows, columnLen, cycles);
 
     intervalSize = rows / slaves;
     intervalUints = intervalSize * columnLen;
     fullIntervalUints = (intervalSize + 2) * columnLen;
+
+    rows += 2; // due to first and last zeros row
+    printf("rows %u, columnLen %u, cycles %u\n", rows, columnLen, cycles);
 
     //printf("Starting nodes...\n");
     if(myId == 0) // master
