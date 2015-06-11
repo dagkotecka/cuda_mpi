@@ -6,9 +6,9 @@
 
 #define DATA 0
 
-unsigned int* cudaCalculate(unsigned int * cells, unsigned int columnLen, unsigned int rowLen);
+void cudaCalculate(char * cells, unsigned int columnLen, unsigned int rowLen);
 
-void print_board(unsigned int * board, unsigned int columnLen, unsigned int rows)
+void print_board(char * board, unsigned int columnLen, unsigned int rows)
 {
     unsigned int ii = 0;
     unsigned int jj = 0;
@@ -33,8 +33,8 @@ int main(int argc, char **argv)
 {
     int myId, procs, slaves;
     unsigned int columnLen, cycles, rows, printing;
-    unsigned int intervalSize, intervalUints, fullIntervalUints;
-    unsigned int *board = NULL; 
+    unsigned int intervalSize, intervalChars, fullIntervalChars;
+    char *board = NULL; 
     MPI_Status status;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &myId);
@@ -75,8 +75,8 @@ int main(int argc, char **argv)
     }
 
     intervalSize = rows / slaves;
-    intervalUints = intervalSize * columnLen;
-    fullIntervalUints = (intervalSize + 2) * columnLen;
+    intervalChars = intervalSize * columnLen;
+    fullIntervalChars = (intervalSize + 2) * columnLen;
 
     rows += 2; // due to first and last zeros row
     //printf("rows %u, columnLen %u, cycles %u\n", rows, columnLen, cycles);
@@ -86,9 +86,9 @@ int main(int argc, char **argv)
     {
         unsigned int ii = 0;
         unsigned int jj = 0;
-        unsigned int *new_ptr = NULL;
+        char *new_ptr = NULL;
 
-        board = (unsigned int *) calloc (rows * columnLen, sizeof(unsigned int));
+        board = (char *) calloc (rows * columnLen, sizeof(char));
 
         if(board == NULL)
         {
@@ -111,14 +111,14 @@ int main(int argc, char **argv)
         {
             for(ii = 0; ii < (unsigned)slaves; ii++)
             {
-                new_ptr = &board [ii * (intervalUints)];
-                MPI_Send(new_ptr, fullIntervalUints, MPI_UNSIGNED, ii + 1, DATA, MPI_COMM_WORLD);
+                new_ptr = &board [ii * (intervalChars)];
+                MPI_Send(new_ptr, fullIntervalChars, MPI_CHAR, ii + 1, DATA, MPI_COMM_WORLD);
             }
 
             for(ii = 0; ii < (unsigned)slaves; ii++)
             {
-                new_ptr = &board[ii * intervalUints + columnLen];
-                MPI_Recv(new_ptr, intervalUints, MPI_UNSIGNED, ii + 1, DATA, MPI_COMM_WORLD, &status);
+                new_ptr = &board[ii * intervalChars + columnLen];
+                MPI_Recv(new_ptr, intervalChars, MPI_CHAR, ii + 1, DATA, MPI_COMM_WORLD, &status);
             }
 
             for(jj = 0; jj < columnLen; ++jj)
@@ -136,8 +136,8 @@ int main(int argc, char **argv)
     }
     else // slaves
     {
-        unsigned int *new_ptr = NULL;
-        unsigned int *slaveBoard = (unsigned int *) malloc (fullIntervalUints * sizeof(unsigned int));
+        char *new_ptr = NULL;
+        char *slaveBoard = (char *) malloc (fullIntervalChars * sizeof(char));
         //printf("Processing node %d...\n", myId);
 
         if(slaveBoard == NULL)
@@ -147,13 +147,13 @@ int main(int argc, char **argv)
         }
         while(cycles--)
         {
-            MPI_Recv(slaveBoard, fullIntervalUints, MPI_UNSIGNED, 0, DATA, MPI_COMM_WORLD, &status);
+            MPI_Recv(slaveBoard, fullIntervalChars, MPI_CHAR, 0, DATA, MPI_COMM_WORLD, &status);
 
             //printf("Processing node %d...2\n", myId);
-            cudaCalculate(slaveBoard, columnLen, fullIntervalUints / columnLen);
+            cudaCalculate(slaveBoard, columnLen, fullIntervalChars / columnLen);
             //printf("Processing node %d...3\n", myId);
             new_ptr = &slaveBoard[columnLen];
-            MPI_Send(new_ptr, intervalUints, MPI_UNSIGNED, 0, DATA, MPI_COMM_WORLD);
+            MPI_Send(new_ptr, intervalChars, MPI_CHAR, 0, DATA, MPI_COMM_WORLD);
         }
         free(slaveBoard);
         slaveBoard = NULL;
