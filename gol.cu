@@ -54,61 +54,67 @@ void check_error(cudaError_t error, error_case place)
 __global__ void
 calculate_new_status(const char *board, char *new_board, unsigned int columnLen, unsigned int rowLen, unsigned int threads)
 {
-    int aa = blockDim.x * blockIdx.x + threadIdx.x;
-
-    while (aa < columnLen*rowLen)
+    int id = blockDim.x * blockIdx.x + threadIdx.x;
+    int aa = 0;
+    int granulity = (columnLen*rowLen + threads - 1) / threads; // round up
+    
+    for(int qq = 0; qq < granulity; qq++)
     {
-        int ii = aa / columnLen;
-        int jj = aa % columnLen;
-        int alive_neighbours = 0;
-
-        if ((ii != 0) || (ii != (columnLen - 1)))
+        aa = id * granulity + qq;
+        if (aa < columnLen*rowLen)
         {
-            alive_neighbours += (valid(ii - 1, jj - 1, columnLen, rowLen) ? board[XY(ii - 1, jj - 1, columnLen)] : 0) ? 1 : 0;
-            alive_neighbours += (valid(ii - 1, jj, columnLen, rowLen) ? board[XY(ii - 1, jj, columnLen)] : 0) ? 1 : 0;
-            alive_neighbours += (valid(ii - 1, jj + 1, columnLen, rowLen) ? board[XY(ii - 1, jj + 1, columnLen)] : 0) ? 1 : 0;
-            alive_neighbours += (valid(ii, jj - 1, columnLen, rowLen) ? board[XY(ii, jj - 1, columnLen)] : 0) ? 1 : 0;
-            alive_neighbours += (valid(ii, jj + 1, columnLen, rowLen) ? board[XY(ii, jj + 1, columnLen)] : 0) ? 1 : 0;
-            alive_neighbours += (valid(ii + 1, jj - 1, columnLen, rowLen) ? board[XY(ii + 1, jj - 1, columnLen)] : 0) ? 1 : 0;
-            alive_neighbours += (valid(ii + 1, jj, columnLen, rowLen) ? board[XY(ii + 1, jj, columnLen)] : 0) ? 1 : 0;
-            alive_neighbours += (valid(ii + 1, jj + 1, columnLen, rowLen) ? board[XY(ii + 1, jj + 1, columnLen)] : 0) ? 1 : 0;
+            int ii = aa / columnLen;
+            int jj = aa % columnLen;
+            int alive_neighbours = 0;
+
+            if ((ii != 0) || (ii != (columnLen - 1)))
+            {
+                alive_neighbours += (valid(ii - 1, jj - 1, columnLen, rowLen) ? board[XY(ii - 1, jj - 1, columnLen)] : 0) ? 1 : 0;
+                alive_neighbours += (valid(ii - 1, jj, columnLen, rowLen) ? board[XY(ii - 1, jj, columnLen)] : 0) ? 1 : 0;
+                alive_neighbours += (valid(ii - 1, jj + 1, columnLen, rowLen) ? board[XY(ii - 1, jj + 1, columnLen)] : 0) ? 1 : 0;
+                alive_neighbours += (valid(ii, jj - 1, columnLen, rowLen) ? board[XY(ii, jj - 1, columnLen)] : 0) ? 1 : 0;
+                alive_neighbours += (valid(ii, jj + 1, columnLen, rowLen) ? board[XY(ii, jj + 1, columnLen)] : 0) ? 1 : 0;
+                alive_neighbours += (valid(ii + 1, jj - 1, columnLen, rowLen) ? board[XY(ii + 1, jj - 1, columnLen)] : 0) ? 1 : 0;
+                alive_neighbours += (valid(ii + 1, jj, columnLen, rowLen) ? board[XY(ii + 1, jj, columnLen)] : 0) ? 1 : 0;
+                alive_neighbours += (valid(ii + 1, jj + 1, columnLen, rowLen) ? board[XY(ii + 1, jj + 1, columnLen)] : 0) ? 1 : 0;
 
 #if DEBUG
-            new_board[XY(ii, jj, columnLen)] = alive_neighbours;
+                new_board[XY(ii, jj, columnLen)] = alive_neighbours;
 #else
-            char tmp_cell_val = 0;
+                char tmp_cell_val = 0;
 
-            if (board[XY(ii, jj, columnLen)] == 0)
-            {
-                if (alive_neighbours == 3)
+                if (board[XY(ii, jj, columnLen)] == 0)
                 {
-                    tmp_cell_val = 1;
+                    if (alive_neighbours == 3)
+                    {
+                        tmp_cell_val = 1;
+                    }
+                    else
+                    {
+                        tmp_cell_val = 0;
+                    }
                 }
                 else
                 {
-                    tmp_cell_val = 0;
+                    if (alive_neighbours < 2)
+                    {
+                        tmp_cell_val = 0;
+                    }
+                    else if (alive_neighbours > 3)
+                    {
+                        tmp_cell_val = 0;
+                    }
+                    else
+                    {
+                        tmp_cell_val = 1;
+                    }
                 }
-            }
-            else
-            {
-                if (alive_neighbours < 2)
-                {
-                    tmp_cell_val = 0;
-                }
-                else if (alive_neighbours > 3)
-                {
-                    tmp_cell_val = 0;
-                }
-                else
-                {
-                    tmp_cell_val = 1;
-                }
-            }
 
-            new_board[XY(ii, jj, columnLen)] = tmp_cell_val;
+                new_board[XY(ii, jj, columnLen)] = tmp_cell_val;
 #endif // DEBUG
+            }
+            aa += threads;
         }
-        aa += threads;
     }
 }
 
